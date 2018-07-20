@@ -80,12 +80,14 @@ end
 def main_anime
   db = Database.new(name: 'test')
   c = db.collection('anime')
-
-  indices = batch_indices(1, 100, 25)
+   # TODO: fix unicode encode errors...
+  indices = batch_indices(101, 500, 100)
   indices.each do |i, j|
     puts "#{i} -> #{j}"
     docs = get_batch_anime(i, j)
-    insert_many_docs(c, docs)
+    unless docs.empty?
+      insert_many_docs(c, docs)
+    end
   end
 end
 
