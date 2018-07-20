@@ -3,7 +3,7 @@ require_relative 'db'
 
 
 
-def get_doc_batch id_start, id_end
+def get_batch_user_library id_start, id_end
   
   kitsu = KitsuAPI.new()
 
@@ -20,11 +20,26 @@ def get_doc_batch id_start, id_end
   return docs
 end
 
+def get_batch_anime id_start, id_end
+  
+  kitsu = KitsuAPI.new()
 
-def insert_many_docs docs
+  docs = []
+  for i in id_start..id_end
+    # TODO: add some console output to following function
+    doc = kitsu.get_anime_document(i)
+    unless doc.nil?  # can't insert nil results into mongodb
+      docs << kitsu.get_anime_document(i)
+    end
+  end
+  return docs
+end
+
+
+def insert_many_docs collection, docs
   begin
     puts "\ninserting..."
-    result = c.insert_many(docs)
+    result = collection.insert_many(docs)
     puts "records inserted: #{result.inserted_count}"
   rescue StandardError => e
     puts "error: #{e}"
@@ -46,7 +61,7 @@ def batch_indices id_start, id_end, step_size
 end
 
 
-def main
+def main_users
 
   db = Database.new(name: 'test')
   c = db.collection('users')
@@ -55,11 +70,26 @@ def main
 
   indices.each do |i, j|
     puts "#{i} -> #{j}"
-    docs = get_doc_batch(i, j)
-    insert_many_docs(docs)
+    docs = get_batch_user_library(i, j)
+    insert_many_docs(c, docs)
   end
 
 end
 
 
-main()
+def main_anime
+  db = Database.new(name: 'test')
+  c = db.collection('anime')
+
+  indices = batch_indices(1, 100, 25)
+  indices.each do |i, j|
+    puts "#{i} -> #{j}"
+    docs = get_batch_anime(i, j)
+    insert_many_docs(c, docs)
+  end
+end
+
+
+
+# main_users()
+main_anime()
