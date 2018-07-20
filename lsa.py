@@ -26,7 +26,7 @@ def get_data(cursor):
     attributes = ['slug', 'synopsis']
     results = []
     for i, x in enumerate(cursor):
-        print i, x['slug'], x['averageRating']
+        print(i, x['slug'], x['avg_rating'])
         results.append([x[k] for k in attributes])
 
     df = pd.DataFrame(results, columns=attributes)
@@ -61,7 +61,7 @@ class StemmerTokenizer(object):
 
 if __name__ == '__main__':
     client = MongoClient()
-    db = client.kitsu
+    db = client.test
     cursor = db.anime.find()
 
     df = get_data(cursor)
@@ -100,11 +100,11 @@ if __name__ == '__main__':
         a = np.argsort(cs, axis=1)[index][::-1][1:n + 1]
         return zip(y[a], cs[index][a])
 
-    index = 1525
-    print '\ncosine_similarity: %s' % y[index]
+    index = 1
+    print('\ncosine_similarity: %s' % y[index])
     for k, v in recommend(index, cs, y, 10):
-        print '%s: %.4f' % (k, v)
+        print('%s: %.4f' % (k, v))
 
-    print '\ncosine_similarity (linear_kernel): %s' % y[index]
+    print('\ncosine_similarity (linear_kernel): %s' % y[index])
     for k, v in recommend(index, cs_lk, y, 10):
-        print '%s: %.4f' % (k, v)
+        print('%s: %.4f' % (k, v))
