@@ -3,7 +3,7 @@ require 'json'
 require 'addressable/uri'
 
 
-
+# should be module?
 class Helpers
   def to_hash
     hash = {}
@@ -20,7 +20,7 @@ class Configuration
     # kitsu has not yet implemented application registration the following 
     # key/secret pair are public and available on the API documentation site:
     # https://kitsu.docs.apiary.io/#reference/authentication
-    
+
     key = "dd031b32d2f56c990b1425efe6c42ad847e7fe3ab46bf1299f05ecd856bdb7dd"
     secret = "54d7307928f63414defd96399fc31ba847961ceaecef3a5fd93144e960c0e151"
     @root = "https://kitsu.io/api/edge/"
@@ -58,6 +58,28 @@ class LibraryEntry < Helpers
 end
 
 
+class Anime < Helpers
+  attr_reader :id, :slug, :synopsis, :title, :avg_rating, :rating_freq, :n_users,
+    :n_favourites, :start_date, :end_date, :rank_popularity, :rank_rating
+
+  def initialize data
+    attributes = data['attributes']
+    @id = data['id']
+    @slug = attributes['slug']
+    @synopsis = attributes['synopsis']
+    @title = attributes['canonicalTitle']
+    @avg_rating = attributes['averageRating'].to_f  # TODO: handle nil values?
+    @rating_freq = attributes['ratingFrequencies']  # TODO: convert to {int: float} pairs
+    @n_users = attributes['userCount']
+    @n_favourites = attributes['favouritesCount']
+    @start_date = attributes['startDate']
+    @end_date = attributes['endDate']
+    @rank_popularity = attributes['popularityRank']
+    @rank_rating = attributes['ratingRank']
+  end
+end
+
+
 class KitsuAPI < Configuration
 
   def initialize
@@ -86,7 +108,6 @@ class KitsuAPI < Configuration
     else
       return nil
     end
-
   end
 
   def get_user_library id, type, status, limit=500
@@ -156,4 +177,16 @@ class KitsuAPI < Configuration
     end
   end
 
+  def get_anime_by_id id
+    uri = "https://kitsu.io/api/edge/anime/#{id}"
+    result = self.get_result(uri)
+    return Anime.new(result['data'])
+  end
+
+  def get_anime_document id
+    return self.get_anime_by_id(id).to_hash
+  end
+
+
 end
+
