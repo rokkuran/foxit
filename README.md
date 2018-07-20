@@ -6,10 +6,11 @@ Ruby based wrapper for [Kitsu][kitsu] API ([documentation][api]).
 ### User
 - Get user by id or name with associated attributes (minimal selection currently).
 - Get all user library entries with id, rating, timings.
-- Store data locally in mongodb.
+- Store data locally in mongodb - chunked batch requests implemented.
 
 ### Items
-- Previous version was scrapped in favour of re-write. Does not exist anymore.
+- Get anime by id with associated attributes (majority available)
+- Store data locally in mongodb - chunked batch requests implemented.
 
 
 ### Recommenders
