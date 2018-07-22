@@ -3,7 +3,7 @@ require 'json'
 require 'addressable/uri'
 
 
-# should be module?
+
 class Helpers
   def to_hash
     hash = {}
@@ -106,13 +106,6 @@ class KitsuAPI < Configuration
   def get_user_by_id id
     uri = Addressable::URI.parse("#{@root}users/#{id}")
     result = self.get_result(uri.to_s)
-
-    # unless result.key?('errors')
-    #   return User.new(result['data'])
-    # else
-    #   return nil
-    # end
-
     return result.key?('errors') ? nil : User.new(result['data'])
   end
 
@@ -186,26 +179,13 @@ class KitsuAPI < Configuration
   def get_anime_by_id id
     uri = "#{@root}/anime/#{id}"
     result = self.get_result(uri)
-    # TODO: move this check to function - same with user equivalent
-    # unless result.key?('errors')
-    #   return Anime.new(result['data'])
-    # else
-    #   return nil
-    # end
-
     return result.key?('errors') ? nil : Anime.new(result['data'])
   end
 
   def get_anime_document id
     result = self.get_anime_by_id(id)
-    # unless result.nil?
-    #   return result.to_hash
-    # else
-    #   return nil
-    # end
     return result.nil? ? nil : result.to_hash
   end
-
 
 end
 
