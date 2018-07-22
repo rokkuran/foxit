@@ -14,8 +14,9 @@ Ruby based wrapper for [Kitsu][kitsu] API ([documentation][api]).
 
 
 ### Recommenders
-**Note**: python based recommendation code is broken due to re-write of API wrapper, which structure the database differently. I have left them as examples to be revised in the future.
+**Note**: python based recommendation code is broken due to re-write of API wrapper, which structures the database differently. I have left them as examples to be revised in the future.
 
+- LSA based recommendations using synopsis: tokenised; stemmed; tf-idf; SVD; cosine simliarity.
 - Preliminary work on content based recommender.
 - Preliminary work on SVD based collaborative filtering recommender.
 
