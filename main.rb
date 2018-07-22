@@ -3,6 +3,14 @@ require_relative 'db'
 
 
 
+class String
+  def numeric?
+    Float(self) != nil rescue false
+  end
+end
+
+
+
 def get_batch_user_library id_start, id_end
   
   kitsu = KitsuAPI.new()
@@ -28,8 +36,20 @@ def get_batch_anime id_start, id_end
   for i in id_start..id_end
     # TODO: add some console output to following function
     doc = kitsu.get_anime_document(i)
+
+    # doc.each_pair do |k, v|
+      
+    #   if v.is_a? String
+    #     x = v.encode(Encoding::UTF_8,  {invalid: :replace, undef: :replace, replace: ''})
+    #   elsif v.is_numeric?
+    #     x = v.to_f
+    #   end
+
+    #   doc[k] = x
+    # end
+
     unless doc.nil?  # can't insert nil results into mongodb
-      docs << kitsu.get_anime_document(i)
+      docs << doc
     end
   end
   return docs
@@ -81,7 +101,8 @@ def main_anime
   db = Database.new(name: 'test')
   c = db.collection('anime')
    # TODO: fix unicode encode errors...
-  indices = batch_indices(101, 500, 100)
+  # indices = batch_indices(101, 500, 100)
+  indices = batch_indices(1001, 2000, 100)
   indices.each do |i, j|
     puts "#{i} -> #{j}"
     docs = get_batch_anime(i, j)
