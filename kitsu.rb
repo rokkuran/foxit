@@ -180,11 +180,21 @@ class KitsuAPI < Configuration
   def get_anime_by_id id
     uri = "https://kitsu.io/api/edge/anime/#{id}"
     result = self.get_result(uri)
-    return Anime.new(result['data'])
+    # TODO: move this check to function - same with user equivalent
+    unless result.key?('errors')
+      return Anime.new(result['data'])
+    else
+      return nil
+    end
   end
 
   def get_anime_document id
-    return self.get_anime_by_id(id).to_hash
+    result = self.get_anime_by_id(id)
+    unless result.nil?
+      return result.to_hash
+    else
+      return nil
+    end
   end
 
 
