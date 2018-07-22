@@ -7,7 +7,7 @@ require 'addressable/uri'
 class Helpers
   def to_hash
     hash = {}
-    instance_variables.each {|x| hash[x.to_s.delete("@")] = instance_variable_get(x) }
+    instance_variables.each {|x| hash[x.to_s.delete("@")] = instance_variable_get(x)}
     hash
   end
 end
@@ -60,7 +60,8 @@ end
 
 class Anime < Helpers
   attr_reader :id, :slug, :synopsis, :title, :avg_rating, :rating_freq, :n_users,
-    :n_favourites, :start_date, :end_date, :rank_popularity, :rank_rating
+    :n_favourites, :start_date, :end_date, :rank_popularity, :rank_rating, :subtype,
+    :nsfw; :showtype
 
   def initialize data
     attributes = data['attributes']
@@ -70,12 +71,15 @@ class Anime < Helpers
     @title = attributes['canonicalTitle']
     @avg_rating = attributes['averageRating'].to_f  # TODO: handle nil values?
     @rating_freq = attributes['ratingFrequencies']  # TODO: convert to {int: float} pairs
-    @n_users = attributes['userCount']
-    @n_favourites = attributes['favouritesCount']
+    @n_users = attributes['userCount'].to_i
+    @n_favourites = attributes['favouritesCount'].to_i
     @start_date = attributes['startDate']
     @end_date = attributes['endDate']
-    @rank_popularity = attributes['popularityRank']
-    @rank_rating = attributes['ratingRank']
+    @rank_popularity = attributes['popularityRank'].to_i
+    @rank_rating = attributes['ratingRank'].to_i
+    @subtype = attributes['subtype']
+    @showtype = attributes['showType']
+    @nsfw = attributes['nsfw']  # TODO: convert to bool?
   end
 end
 
@@ -103,11 +107,13 @@ class KitsuAPI < Configuration
     uri = Addressable::URI.parse("#{@root}users/#{id}")
     result = self.get_result(uri.to_s)
 
-    unless result.key?('errors')
-      return User.new(result['data'])
-    else
-      return nil
-    end
+    # unless result.key?('errors')
+    #   return User.new(result['data'])
+    # else
+    #   return nil
+    # end
+
+    return result.key?('errors') ? nil : User.new(result['data'])
   end
 
   def get_user_library id, type, status, limit=500
@@ -178,23 +184,26 @@ class KitsuAPI < Configuration
   end
 
   def get_anime_by_id id
-    uri = "https://kitsu.io/api/edge/anime/#{id}"
+    uri = "#{@root}/anime/#{id}"
     result = self.get_result(uri)
     # TODO: move this check to function - same with user equivalent
-    unless result.key?('errors')
-      return Anime.new(result['data'])
-    else
-      return nil
-    end
+    # unless result.key?('errors')
+    #   return Anime.new(result['data'])
+    # else
+    #   return nil
+    # end
+
+    return result.key?('errors') ? nil : Anime.new(result['data'])
   end
 
   def get_anime_document id
     result = self.get_anime_by_id(id)
-    unless result.nil?
-      return result.to_hash
-    else
-      return nil
-    end
+    # unless result.nil?
+    #   return result.to_hash
+    # else
+    #   return nil
+    # end
+    return result.nil? ? nil : result.to_hash
   end
 
 
