@@ -3,14 +3,6 @@ require_relative 'db'
 
 
 
-class String
-  def numeric?
-    Float(self) != nil rescue false
-  end
-end
-
-
-
 def get_batch_user_library id_start, id_end
   
   kitsu = KitsuAPI.new()
@@ -22,11 +14,12 @@ def get_batch_user_library id_start, id_end
     # TODO: add some console output to following function
     doc = kitsu.get_user_library_document(i)
     unless doc.nil?  # can't insert nil results into mongodb
-      docs << kitsu.get_user_library_document(i)
+      docs << doc
     end
   end
   return docs
 end
+
 
 def get_batch_anime id_start, id_end
   
@@ -37,28 +30,18 @@ def get_batch_anime id_start, id_end
     # TODO: add some console output to following function
     doc = kitsu.get_anime_document(i)
 
-    # doc.each_pair do |k, v|
-      
-    #   if v.is_a? String
-    #     x = v.encode(Encoding::UTF_8,  {invalid: :replace, undef: :replace, replace: ''})
-    #   elsif v.is_numeric?
-    #     x = v.to_f
-    #   end
-
-    #   doc[k] = x
-    # end
-
     unless doc.nil?  # can't insert nil results into mongodb
       docs << doc
     end
   end
+
   return docs
 end
 
 
 def insert_many_docs collection, docs
   begin
-    puts "\ninserting..."
+    puts "inserting..."
     result = collection.insert_many(docs)
     puts "records inserted: #{result.inserted_count}"
   rescue StandardError => e
@@ -83,10 +66,10 @@ end
 
 def main_users
 
-  db = Database.new(name: 'test')
+  db = Database.new(name: 'kitsu')
   c = db.collection('users')
 
-  indices = batch_indices(1, 100, 25)
+  indices = batch_indices(1, 250, 25)
 
   indices.each do |i, j|
     puts "#{i} -> #{j}"
@@ -98,11 +81,10 @@ end
 
 
 def main_anime
-  db = Database.new(name: 'test')
+  db = Database.new(name: 'kitsu')
   c = db.collection('anime')
-   # TODO: fix unicode encode errors...
-  # indices = batch_indices(101, 500, 100)
-  indices = batch_indices(1001, 2000, 100)
+
+  indices = batch_indices(5001, 6000, 50)
   indices.each do |i, j|
     puts "#{i} -> #{j}"
     docs = get_batch_anime(i, j)
@@ -114,5 +96,5 @@ end
 
 
 
-# main_users()
-main_anime()
+main_users()
+# main_anime()
