@@ -1,25 +1,11 @@
 require_relative 'kitsu'
-require_relative 'db'
 
 require 'mongo'
-
-
 Mongo::Logger.logger.level = Logger::WARN
 
 
 
-# class Database
-#   attr_reader :client, :host, 
-
-#   def initialize db_name: 'test', host: ['127.0.0.1:27017']
-#     @host = host
-#     @db_name = db_name
-#     @client = Mongo::Client.new(host, {database: db_name})
-#   end
-# end
-
-
-class ETL < Database
+class ETL
   attr_reader :kitsu, :client
 
   def initialize db_name: 'kitsu', host: ['127.0.0.1:27017']
@@ -56,4 +42,4 @@ end
 
 etl = ETL.new()
 # etl.get_anime(1..10)
-etl.get_libraries(1003..1500)
+etl.get_libraries(11..1000)
