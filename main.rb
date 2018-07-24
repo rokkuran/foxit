@@ -1,6 +1,8 @@
 require_relative 'kitsu'
 require_relative 'db'
 
+# require 'ruby-prof'
+
 
 
 def get_batch_user_library id_start, id_end
@@ -66,10 +68,11 @@ end
 
 def main_users
 
-  db = Database.new(name: 'kitsu')
+  db = Database.new(name: 'test')
   c = db.collection('users')
 
-  indices = batch_indices(1, 250, 25)
+  # indices = batch_indices(1001, 2000, 50)
+  indices = batch_indices(4, 20, 1)
 
   indices.each do |i, j|
     puts "#{i} -> #{j}"
@@ -96,5 +99,30 @@ end
 
 
 
-main_users()
+def main_all_library
+
+  db = Database.new(name: 'test')
+  c = db.collection('library')
+
+  kitsu = Kitsu.new()
+  docs = kitsu.get_batch_libraries_docs(501..1000)
+
+  insert_many_docs(c, docs)
+
+end
+
+
+
+main_all_library()
+
+
+# RubyProf.start
+
+# main_users()
 # main_anime()
+
+# result = RubyProf.stop
+
+# # print a flat profile to text
+# printer = RubyProf::FlatPrinter.new(result)
+# printer.print(STDOUT)
