@@ -14,7 +14,7 @@ Current fields obtained from Kitsu API. There are more available and could easil
 ```
 {
   '_id': ObjectId('5b56ad7dafd2a496c0faa495'),
-  'media_id': 1376,       # id for anime, e.g., this one related to 'Code Geass: Lelouch of the Rebellion'
+  'media_id': 1376,       # id for anime, e.g., this one relates to 'Code Geass: Lelouch of the Rebellion'
   'rating': 17,           # user rating [1-20]; None if not rated.
   'record_id': 18344699,  # library item id; used to return the actual media_id
   'status': 'completed',  # media viewing status: {completed, planned, watching, hold, dropped}
