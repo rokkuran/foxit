@@ -29,6 +29,37 @@ class LibraryItem < Helpers
 end
 
 
+class Anime < Helpers
+  attr_reader :id, :slug, :synopsis, :title, :avg_rating, :rating_freq, :n_users,
+    :n_favourites, :start_date, :end_date, :rank_popularity, :rank_rating, :subtype,
+    :nsfw; :showtype
+
+  def initialize data
+    attributes = data['attributes']
+    @id = data['id'].to_i
+    @slug = attributes['slug']
+    @synopsis = attributes['synopsis']
+    @title = attributes['canonicalTitle']
+    @avg_rating = attributes['averageRating'].to_f  # TODO: need to handle nil values?
+    
+    rf_int = {}
+    # mongodb needs string keys anyway, so k.to_i redundant...
+    attributes['ratingFrequencies'].each_pair { | k, v | rf_int[k.to_i] = v.to_i }
+    @rating_freq = rf_int
+
+    @n_users = attributes['userCount'].to_i
+    @n_favourites = attributes['favouritesCount'].to_i
+    @start_date = attributes['startDate']
+    @end_date = attributes['endDate']
+    @rank_popularity = attributes['popularityRank'].to_i
+    @rank_rating = attributes['ratingRank'].to_i
+    @subtype = attributes['subtype']
+    @showtype = attributes['showType']
+    @nsfw = attributes['nsfw']  # TODO: convert to bool?
+  end
+end
+
+
 class Kitsu
 
   def initialize
@@ -82,7 +113,12 @@ class Kitsu
   end
 
 
-  def get_media_by_id entry_id
+  def get_media_relationship_by_id entry_id
+    # adding memoisation to stop requesting same media docs
+    # TODO: extend to items already existing in db?
+    @get_media_relationship_by_id ||= {}
+    return @get_media_relationship_by_id[entry_id] if @get_media_relationship_by_id.key?(entry_id)
+
     url = self.build_media_url(entry_id)
     self.get_result(url)
   end
@@ -125,7 +161,7 @@ class Kitsu
   end
 
 
-  def get_batch_libraries user_ids, max_threads=200
+  def batch_get_libraries user_ids, max_threads=200
 
     all_library_entries = []
     user_libraries = self.batch_get_results(user_ids, :get_library_by_id, max_threads)
@@ -134,7 +170,7 @@ class Kitsu
   
       media_ids = []
       library.map { |entry| media_ids << entry['id'] }
-      media_results = self.batch_get_results(media_ids, :get_media_by_id, max_threads)
+      media_results = self.batch_get_results(media_ids, :get_media_relationship_by_id, max_threads)
       
       library.each do |entry|
         all_library_entries << LibraryItem.new(user_id, entry, media_results[entry['id']])
@@ -144,15 +180,57 @@ class Kitsu
   
     all_library_entries
   end
+
+  
+  def get_user_library
+    # TODO: return user library using single id call to batch_get_library
+  end
   
 
-  def get_batch_libraries_docs user_ids, max_threads=200
-    all_library_entries = self.get_batch_libraries(user_ids, max_threads)
+  def objects_to_hash obj_array
+    docs = []
+    obj_array.map { |obj| docs << obj.to_hash }
+    docs
+  end
+
+
+  def batch_get_libraries_docs user_ids, max_threads=200
+    all_library_entries = self.batch_get_libraries(user_ids, max_threads)
     
     docs = []
     all_library_entries.map { |entry| docs << entry.to_hash }
 
     docs
+  end
+
+
+  def build_anime_url id
+    "#{@root}/anime/#{id}"
+  end
+
+
+  def get_anime_by_id id
+    url = build_anime_url(id)
+    self.get_result(url)
+  end
+
+
+  def batch_get_anime anime_ids, max_threads=200
+    results = self.batch_get_results(anime_ids, :get_anime_by_id, max_threads)
+
+    anime_items = []
+    results.each do |id, result|
+      unless result.key?('errors')
+        anime_items << Anime.new(result['data'])
+      end
+    end
+
+    anime_items
+  end
+
+  def get_anime_documents anime_ids, max_threads=200
+    anime_items = self.batch_get_anime(anime_ids, max_threads)
+    self.objects_to_hash(anime_items)
   end
 
 
@@ -163,7 +241,7 @@ end
 def main
 
   kitsu = Kitsu.new()
-  all_library_entries = kitsu.get_batch_libraries(1..10)
+  all_library_entries = kitsu.batch_get_libraries(1..10)
 
   all_library_entries.each_with_index do |entry, i|
     if i < 100
