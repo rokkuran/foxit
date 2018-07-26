@@ -23,4 +23,9 @@ Gem::Specification.new do |spec|
 
   spec.require_paths = ["lib"]
 
+  spec.add_dependency = 'net/http'
+  spec.add_dependency = 'json'
+  spec.add_dependency = 'addressable/uri'
+  spec.add_dependency = 'mongo'
+
 end
