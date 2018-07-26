@@ -131,6 +131,6 @@ Current fields obtained from Kitsu API. There are more available and could easil
 
 
 
-[kitsu]: kitsu.io
+[kitsu]: https://kitsu.io
 [api]: https://kitsu.docs.apiary.io/
 [mongodb]: https://www.mongodb.com/download-center#community
