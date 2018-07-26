@@ -10,9 +10,9 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Lachlan Taylor"]
   spec.email         = ["lachlanbtaylor@gmail.com"]
 
-  spec.summary       = %q{Write a short summary, because RubyGems requires one.}
-  spec.description   = %q{Write a longer description or delete this line.}
-  # spec.homepage      = "TODO: Put your gem's website or public repo URL here."
+  spec.summary       = %q{Unofficial Kitsu API wrapper with MongoDB capability.}
+  # spec.description   = %q{Write a longer description or delete this line.}
+  spec.homepage      = "https://github.com/rokkuran/foxit"
   spec.license       = "MIT"
 
   # Specify which files should be added to the gem when it is released.
