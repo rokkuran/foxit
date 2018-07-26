@@ -1,66 +1,12 @@
+require_relative 'objects'
+
 require 'net/http'
 require 'json'
 require 'addressable/uri'
 
 
-class Helpers
-  def to_hash
-    hash = {}
-    instance_variables.each {|x| hash[x.to_s.delete("@")] = instance_variable_get(x)}
-    hash
-  end
-end
 
-
-class LibraryItem < Helpers
-  attr_reader :user_id, :record_id, :status, :rating, :media_id, :type
-
-  def initialize user_id, entry_result, media_result
-    @user_id = user_id.to_i
-    @record_id = entry_result['id'].to_i
-    @status = entry_result['attributes']['status']
-
-    rating = entry_result['attributes']['ratingTwenty']
-    @rating = rating.nil? ? nil : rating.to_i
-    
-    @media_id = media_result['data']['id'].to_i
-    @type = media_result['data']['type']
-  end
-end
-
-
-class Anime < Helpers
-  attr_reader :id, :slug, :synopsis, :title, :avg_rating, :rating_freq, :n_users,
-    :n_favourites, :start_date, :end_date, :rank_popularity, :rank_rating, :subtype,
-    :nsfw; :showtype
-
-  def initialize data
-    attributes = data['attributes']
-    @id = data['id'].to_i
-    @slug = attributes['slug']
-    @synopsis = attributes['synopsis']
-    @title = attributes['canonicalTitle']
-    @avg_rating = attributes['averageRating'].to_f  # TODO: need to handle nil values?
-    
-    rf_int = {}
-    # mongodb needs string keys anyway, so k.to_i redundant...
-    attributes['ratingFrequencies'].each_pair { | k, v | rf_int[k.to_i] = v.to_i }
-    @rating_freq = rf_int
-
-    @n_users = attributes['userCount'].to_i
-    @n_favourites = attributes['favouritesCount'].to_i
-    @start_date = attributes['startDate']
-    @end_date = attributes['endDate']
-    @rank_popularity = attributes['popularityRank'].to_i
-    @rank_rating = attributes['ratingRank'].to_i
-    @subtype = attributes['subtype']
-    @showtype = attributes['showType']
-    @nsfw = attributes['nsfw']  # TODO: convert to bool?
-  end
-end
-
-
-class Kitsu
+class API
 
   def initialize
     @root = "https://kitsu.io/api/edge/"
@@ -160,7 +106,7 @@ class Kitsu
     results
   end
 
-
+  # TODO: should probably assign to a @variable
   def batch_get_libraries user_ids, max_threads=200
 
     all_library_entries = []
@@ -186,13 +132,6 @@ class Kitsu
     # TODO: return user library using single id call to batch_get_library
   end
   
-
-  def objects_to_hash obj_array
-    docs = []
-    obj_array.map { |obj| docs << obj.to_hash }
-    docs
-  end
-
 
   def batch_get_libraries_docs user_ids, max_threads=200
     all_library_entries = self.batch_get_libraries(user_ids, max_threads)
@@ -238,20 +177,20 @@ end
 
 
 
-def main
+# def main
 
-  kitsu = Kitsu.new()
-  all_library_entries = kitsu.batch_get_libraries(1..10)
+#   kitsu = Kitsu.new()
+#   all_library_entries = kitsu.batch_get_libraries(1..10)
 
-  all_library_entries.each_with_index do |entry, i|
-    if i < 100
-      p "user_id=#{entry.user_id}; entry_id=#{entry.record_id}; media_id=#{entry.media_id}, rating=#{entry.rating}"
-    else
-      break
-    end
-  end
+#   all_library_entries.each_with_index do |entry, i|
+#     if i < 100
+#       p "user_id=#{entry.user_id}; entry_id=#{entry.record_id}; media_id=#{entry.media_id}, rating=#{entry.rating}"
+#     else
+#       break
+#     end
+#   end
 
-end
+# end
 
 
 
