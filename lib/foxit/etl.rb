@@ -4,6 +4,7 @@ require 'mongo'
 Mongo::Logger.logger.level = Logger::WARN
 
 
+
 module Foxit
 
   class ETL
@@ -40,9 +41,3 @@ module Foxit
   end
     
 end
-
-
-# etl = ETL.new()
-# etl.get_anime(10000..15000)  # 15000
-# etl.get_libraries(1601..1800)  # 1800
-# etl.get_libraries(4016..4016)  # 4016

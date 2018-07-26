@@ -5,6 +5,7 @@ require 'json'
 require 'addressable/uri'
 
 
+
 module Foxit
 
   class API
