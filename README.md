@@ -13,20 +13,36 @@ gem install foxit
 A few quick examples are detailed below:
 
 ### Retrieving Data
-Get an anime item by id. 
+Get an anime item by id or slug. 
 ```ruby
 api = Foxit::API.new()
 result = api.get_anime_by_id(1)
+result = api.get_anime_by_slug('cowboy-bebop')
 ```
-
-This returns the full json response; however, an object based result can be returned as per the following (planned to be returned as default)
+The slug is basically the hyphen separated version of the name with the special characters removed. When you click on a anime item in kitsu it will be at the end of the url. This returns the `Anime` object; however, the full json response can be obtained as per below:
 ```ruby
-item = Anime.new(result['data'])
+result = api.get_anime_by_id(1, :json)
 ```
 
-Similarly, getting a users library. This returns a list of entries from the `'data'` attribute of the json returned. 
+Similarly, getting a users library. Returns a list of `LibraryItem` objects.
+```ruby
+result = api.get_user_library_by_id(1)
+```
+
+This returns a list of entries (hash format) from the `'data'` attribute of the json returned. 
 ```ruby
 result = api.get_library_by_id(1)
+```
+
+Examples of getting a batch of anime results:
+```ruby
+result = api.batch_get_anime([1, 4, 8, 25])
+```
+
+Similarly, user library examples below. Note: the library batch results are returned as a flat array (filter on user_id to split out).
+```ruby
+result = api.batch_get_libraries(1..10)
+result = api.batch_get_libraries([1, 2, 3, 5])
 ```
 
 
