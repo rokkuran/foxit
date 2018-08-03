@@ -9,5 +9,5 @@ gem 'mongo', '~> 2.5.1', '>= 2.5.1'
 
 group :test do
   gem 'rake'
-  gem 'minitest/autorun'
+  gem 'minitest'
 end
