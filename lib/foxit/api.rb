@@ -1,4 +1,5 @@
 require_relative 'objects'
+require_relative 'helpers'
 
 require 'net/http'
 require 'json'
@@ -8,7 +9,7 @@ require 'addressable/uri'
 
 module Foxit
 
-  class API
+  class API < Helpers
 
     def initialize
       @root = "https://kitsu.io/api/edge/"
@@ -145,37 +146,89 @@ module Foxit
     end
   
   
-    def build_anime_url id
+    def build_anime_url_by_id id
       "#{@root}/anime/#{id}"
     end
     
 
-    def get_anime_by_id_json id
-      url = build_anime_url(id)
-      self.get_result(url)
+    # def get_anime_by_id_json id
+    #   url = build_anime_url_by_id(id)
+    #   self.get_result(url)
+    # end
+
+
+    # def get_anime_by_id_object id
+    #   result = self.get_anime_by_id_json(id)
+    #   Anime.new(result['data'])
+    # end
+
+    # def _get_object_or_json
+
+
+    # def get_anime_by_id id, rtype=:object
+    #   case rtype
+    #   when :json
+    #     return self.get_anime_by_id_json(id)
+    #   when :object
+    #     return self.get_anime_by_id_object(id)
+    #   else
+    #     raise ArgumentError.new("rtype not :object or :json")
+    #   end
+    # end
+
+
+    def build_anime_url_by_slug slug
+      "#{@root}/anime?filter[slug]=#{slug}"
     end
 
 
-    def get_anime_by_id_object id
-      result = self.get_anime_by_id_json(id)
-      Anime.new(result['data'])
-    end
+    def _get_anime_by_attr filter_attr, filter_value, rtype=:object
 
+      case filter_attr
+      when :id
+        url = build_anime_url_by_id(filter_value)
+      when :slug
+        url = build_anime_url_by_slug(filter_value)
+      else
+        raise ArgumentError.new("filter_attr argument (1st) not in {:id, :slug}")
+      end
 
-    def get_anime_by_id id, rtype=:object
+      result = self.get_result(url)
+
       case rtype
-      when :object
-        return self.get_anime_by_id_object(id)
       when :json
-        return self.get_anime_by_id_json(id)
+        return result
+      when :object
+        case filter_attr
+        when :id
+          return Anime.new(result['data'])
+        when :slug
+          # filtering by slug results in the 'data' attribute to be an array
+          return Anime.new(result['data'][0])
+        end
       else
         raise ArgumentError.new("rtype not :object or :json")
       end
     end
-  
-  
+
+
+    def get_anime_by_id id, rtype=:object
+      self._get_anime_by_attr(:id, id, rtype)
+    end
+
+
+    def get_anime_by_slug slug, rtype=:object
+      self._get_anime_by_attr(:slug, slug, rtype)
+    end
+
+
+    def _get_anime_by_id_json id
+      self._get_anime_by_attr(:id, id, :json)
+    end
+
+
     def batch_get_anime anime_ids, max_threads=200
-      results = self.batch_get_results(anime_ids, :get_anime_by_id_json, max_threads)
+      results = self.batch_get_results(anime_ids, :_get_anime_by_id_json, max_threads)
   
       anime_items = []
       results.each do |id, result|
