@@ -1,11 +1,9 @@
-# require "test/unit"
 require 'minitest/autorun'
 
 require_relative '../lib/foxit/api'
 
 
 
-# class TestGetLibraryResults < Test::Unit::TestCase
 class TestGetLibraryResults < Minitest::Test
 
   def setup
