@@ -148,16 +148,34 @@ module Foxit
     def build_anime_url id
       "#{@root}/anime/#{id}"
     end
-  
-  
-    def get_anime_by_id id
+    
+
+    def get_anime_by_id_json id
       url = build_anime_url(id)
       self.get_result(url)
+    end
+
+
+    def get_anime_by_id_object id
+      result = self.get_anime_by_id_json(id)
+      Anime.new(result['data'])
+    end
+
+
+    def get_anime_by_id id, rtype=:object
+      case rtype
+      when :object
+        return self.get_anime_by_id_object(id)
+      when :json
+        return self.get_anime_by_id_json(id)
+      else
+        raise ArgumentError.new("rtype not :object or :json")
+      end
     end
   
   
     def batch_get_anime anime_ids, max_threads=200
-      results = self.batch_get_results(anime_ids, :get_anime_by_id, max_threads)
+      results = self.batch_get_results(anime_ids, :get_anime_by_id_json, max_threads)
   
       anime_items = []
       results.each do |id, result|
@@ -169,6 +187,7 @@ module Foxit
       anime_items
     end
   
+
     def get_anime_documents anime_ids, max_threads=200
       anime_items = self.batch_get_anime(anime_ids, max_threads)
       self.objects_to_hash(anime_items)
