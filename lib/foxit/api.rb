@@ -117,22 +117,51 @@ module Foxit
     
       user_libraries.each do |user_id, library|
     
-        media_ids = []
-        library.map { |entry| media_ids << entry['id'] }
-        media_results = self.batch_get_results(media_ids, :get_media_relationship_by_id, max_threads)
+        # media_ids = []
+        # library.map { |entry| media_ids << entry['id'] }
+        # media_results = self.batch_get_results(media_ids, :get_media_relationship_by_id, max_threads)
         
-        library.each do |entry|
-          all_library_entries << LibraryItem.new(user_id, entry, media_results[entry['id']])
-        end
+        # library.each do |entry|
+        #   all_library_entries << LibraryItem.new(user_id, entry, media_results[entry['id']])
+        # end
+
+        all_library_entries += self._create_library_items(user_id, library, max_threads)
     
       end
     
       all_library_entries
     end
-  
+
+    # TODO: move max_threads to attribute
+    def _create_library_items user_id, library, max_threads
+      media_ids = []
+      library.map { |entry| media_ids << entry['id'] }
+      media_results = self.batch_get_results(media_ids, :get_media_relationship_by_id, max_threads)
+      
+      library_entries = []
+      library.each do |entry|
+        library_entries << LibraryItem.new(user_id, entry, media_results[entry['id']])
+      end
+
+      library_entries
+    end
+
     
-    def get_user_library
+    def get_user_library_by_id user_id, max_threads=200
       # TODO: return user library using single id call to batch_get_library
+      library = self.get_library_by_id(user_id)
+      self._create_library_items(user_id, library, max_threads)
+
+      # media_ids = []
+      # library.map { |entry| media_ids << entry['id'] }
+      # media_results = self.batch_get_results(media_ids, :get_media_relationship_by_id, max_threads)
+      
+      # library_entries = []
+      # library.each do |entry|
+      #   library_entries << LibraryItem.new(user_id, entry, media_results[entry['id']])
+      # end
+
+      # library_entries
     end
     
   
