@@ -1,4 +1,6 @@
 # Kitsu API Wrapper
+[![Build Status](https://travis-ci.com/rokkuran/foxit.svg?branch=master)](https://travis-ci.com/rokkuran/foxit)
+
 Unofficial Ruby wrapper for [Kitsu][kitsu] API ([documentation][api]).
 
 Note: this is the initial version and was written primarily to store data locally on which to train recommendation models. Hence, it works well for the task it was created but there are a few gaps that could be included without too much effort. 
@@ -142,8 +144,8 @@ Current fields obtained from Kitsu API. There are more available and could easil
 
 
 ## Further Work
-- Add some more detail/examples to README
 - Extend on functionality/usability for benefit of other users.
+- Write a few more tests.
 
 
 
