@@ -1,44 +1,23 @@
 require_relative 'objects'
 require_relative 'helpers'
+require_relative 'url_builder'
 
 require 'net/http'
 require 'json'
-require 'addressable/uri'
 
 
-
-# TODO: probably split out library and anime methods
 
 module Foxit
 
+  # TODO: probably split out library and anime methods
   class API < Helpers
 
-    attr_reader :root
+    attr_reader :urlbuilder
     attr_accessor :max_threads
 
-    def initialize
-      @root = "https://kitsu.io/api/edge/"
-      @max_threads = 200
-    end
-
-
-    def build_library_url id, type='Anime', status='completed', limit=500
-      uri = Addressable::URI.parse("#{@root}library-entries")
-  
-      uri_query = {
-        "filter[user_id]" => id,
-        "filter[media_type]" => type,
-        "filter[status]" => status,
-        "page[limit]" => limit
-      }
-      uri.query_values = uri_query
-      
-      uri.to_s
-    end
-  
-    
-    def build_media_url entry_id
-      "#{@root}/library-entries/#{entry_id}/relationships/media"
+    def initialize max_threads=200
+      @max_threads = max_threads
+      @urlbuilder = URLBuilder.new()
     end
   
   
@@ -48,14 +27,14 @@ module Foxit
     end
     
   
-    def get_library_by_url url, entries=[]
+    def _get_library_by_url url, entries=[]
   
       result = self.get_result(url)
       entries += result['data']
     
       if result['links'].key?('next')
         # recursion to retrieve additional results that have ben paginated
-        result = self.get_library_by_url(result['links']['next'], entries)
+        result = self._get_library_by_url(result['links']['next'], entries)
       else
         return entries
       end
@@ -63,8 +42,8 @@ module Foxit
   
   
     def get_library_by_id user_id
-      url = self.build_library_url(user_id)
-      self.get_library_by_url(url)
+      url = @urlbuilder.library(user_id)
+      self._get_library_by_url(url)
     end
   
   
@@ -74,7 +53,7 @@ module Foxit
       @get_media_relationship_by_id ||= {}
       return @get_media_relationship_by_id[entry_id] if @get_media_relationship_by_id.key?(entry_id)
   
-      url = self.build_media_url(entry_id)
+      url = @urlbuilder.media(entry_id)
       self.get_result(url)
     end
   
@@ -129,7 +108,7 @@ module Foxit
 
 
     def _create_library_items user_id, library
-      
+
       # get media_ids from record_ids (not in same response, additional request required)
       record_ids = []
       library.map { |entry| record_ids << entry['id'] }
@@ -158,25 +137,17 @@ module Foxit
   
       docs
     end
-  
-  
-    def build_anime_url_by_id id
-      "#{@root}/anime/#{id}"
-    end
-
-
-    def build_anime_url_by_slug slug
-      "#{@root}/anime?filter[slug]=#{slug}"
-    end
 
 
     def _get_anime_by_attr filter_attr, filter_value, rtype=:object
 
+      # TODO: this is a bit of a mess
+
       case filter_attr
       when :id
-        url = build_anime_url_by_id(filter_value)
+        url = @urlbuilder.anime_by_id(filter_value)
       when :slug
-        url = build_anime_url_by_slug(filter_value)
+        url = @urlbuilder.anime_by_slug(filter_value)
       else
         raise ArgumentError.new("filter_attr argument (1st) not in {:id, :slug}")
       end
