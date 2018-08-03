@@ -25,7 +25,11 @@ Gem::Specification.new do |spec|
 
   spec.required_ruby_version = '>= 2.4.4'
 
-  spec.add_dependency 'json', '~> 2.1.0', '>= 2.0.4'
-  spec.add_dependency 'addressable', '~> 2.5.2', '>= 2.5.2'
-  spec.add_dependency 'mongo', '~> 2.5.1', '>= 2.5.1'
+  # spec.add_dependency 'json', '~> 2.1.0', '>= 2.0.4'
+  # spec.add_dependency 'addressable', '~> 2.5.2', '>= 2.5.2'
+  # spec.add_dependency 'mongo', '~> 2.5.1', '>= 2.5.1'
+
+  # spec.add_dependency 'test/unit'
+  # spec.add_development_dependency 'test/unit'
+
 end

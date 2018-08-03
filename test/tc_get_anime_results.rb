@@ -1,10 +1,13 @@
-require "test/unit"
+# require "test/unit"
+require 'minitest/autorun'
+
 
 require_relative '../lib/foxit/api'
 
 
-
-class TestGetAnimeResponses < Test::Unit::TestCase
+class TestGetAnimeResponses < Minitest::Test
+# class TestGetAnimeResponses < Test::Unit::TestCase
+  
 
   def setup
     @api = Foxit::API.new()
