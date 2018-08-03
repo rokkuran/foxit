@@ -6,7 +6,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 Gem::Specification.new do |spec|
   spec.name          = "foxit"
   # spec.version       = Foxit::VERSION
-  spec.version       = "0.1.1"
+  spec.version       = "0.1.3"
   spec.authors       = ["Lachlan Taylor"]
   spec.email         = ["lachlanbtaylor@gmail.com"]
 

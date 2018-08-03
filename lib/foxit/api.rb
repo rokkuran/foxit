@@ -1,37 +1,23 @@
 require_relative 'objects'
+require_relative 'helpers'
+require_relative 'url_builder'
 
 require 'net/http'
 require 'json'
-require 'addressable/uri'
 
 
 
 module Foxit
 
-  class API
+  # TODO: probably split out library and anime methods
+  class API < Helpers
 
-    def initialize
-      @root = "https://kitsu.io/api/edge/"
-    end
-  
-  
-    def build_library_url id, type='Anime', status='completed', limit=500
-      uri = Addressable::URI.parse("#{@root}library-entries")
-  
-      uri_query = {
-        "filter[user_id]" => id,
-        "filter[media_type]" => type,
-        "filter[status]" => status,
-        "page[limit]" => limit
-      }
-      uri.query_values = uri_query
-      
-      uri.to_s
-    end
-  
-    
-    def build_media_url entry_id
-      "#{@root}/library-entries/#{entry_id}/relationships/media"
+    attr_reader :urlbuilder
+    attr_accessor :max_threads
+
+    def initialize max_threads=200
+      @max_threads = max_threads
+      @urlbuilder = URLBuilder.new()
     end
   
   
@@ -41,14 +27,14 @@ module Foxit
     end
     
   
-    def get_library_by_url url, entries=[]
+    def _get_library_by_url url, entries=[]
   
       result = self.get_result(url)
       entries += result['data']
     
       if result['links'].key?('next')
         # recursion to retrieve additional results that have ben paginated
-        result = self.get_library_by_url(result['links']['next'], entries)
+        result = self._get_library_by_url(result['links']['next'], entries)
       else
         return entries
       end
@@ -56,8 +42,8 @@ module Foxit
   
   
     def get_library_by_id user_id
-      url = self.build_library_url(user_id)
-      self.get_library_by_url(url)
+      url = @urlbuilder.library(user_id)
+      self._get_library_by_url(url)
     end
   
   
@@ -67,17 +53,16 @@ module Foxit
       @get_media_relationship_by_id ||= {}
       return @get_media_relationship_by_id[entry_id] if @get_media_relationship_by_id.key?(entry_id)
   
-      url = self.build_media_url(entry_id)
+      url = @urlbuilder.media(entry_id)
       self.get_result(url)
     end
   
   
-    def batch_get_results ids, fn, max_threads
+    def batch_get_results ids, fn
       """
       ids: ids of results returned: user_id | library_entry_id in this case.
       fn: function name to use to return results (need to use symbol method name)
           e.g. :get_result
-      max_threads: maximum number of active threads.
       """
   
       results = {}
@@ -85,7 +70,7 @@ module Foxit
   
       ids.each do |id|
   
-        if Thread.list.count % max_threads != 0
+        if Thread.list.count % @max_threads != 0
           thread = Thread.new do
             # adding lock slows down considerably shouldn't matter as results are written to hash?
             results[id] = send(fn, id)
@@ -108,56 +93,101 @@ module Foxit
       results
     end
   
-    # TODO: should probably assign to a @variable
-    def batch_get_libraries user_ids, max_threads=200
+
+    def batch_get_libraries user_ids
   
       all_library_entries = []
-      user_libraries = self.batch_get_results(user_ids, :get_library_by_id, max_threads)
+      user_libraries = self.batch_get_results(user_ids, :get_library_by_id)
     
       user_libraries.each do |user_id, library|
-    
-        media_ids = []
-        library.map { |entry| media_ids << entry['id'] }
-        media_results = self.batch_get_results(media_ids, :get_media_relationship_by_id, max_threads)
-        
-        library.each do |entry|
-          all_library_entries << LibraryItem.new(user_id, entry, media_results[entry['id']])
-        end
-    
+        all_library_entries += self._create_library_items(user_id, library)
       end
     
       all_library_entries
     end
-  
+
+
+    def _create_library_items user_id, library
+
+      # get media_ids from record_ids (not in same response, additional request required)
+      record_ids = []
+      library.map { |entry| record_ids << entry['id'] }
+      media_results = self.batch_get_results(record_ids, :get_media_relationship_by_id)
+      
+      library_entries = []
+      library.each do |entry|
+        library_entries << LibraryItem.new(user_id, entry, media_results[entry['id']])
+      end
+
+      library_entries
+    end
+
     
-    def get_user_library
-      # TODO: return user library using single id call to batch_get_library
+    def get_user_library_by_id user_id
+      library = self.get_library_by_id(user_id)
+      self._create_library_items(user_id, library)
     end
     
   
-    def batch_get_libraries_docs user_ids, max_threads=200
-      all_library_entries = self.batch_get_libraries(user_ids, max_threads)
+    def batch_get_libraries_docs user_ids
+      all_library_entries = self.batch_get_libraries(user_ids)
       
       docs = []
       all_library_entries.map { |entry| docs << entry.to_hash }
   
       docs
     end
-  
-  
-    def build_anime_url id
-      "#{@root}/anime/#{id}"
+
+
+    def _get_anime_by_attr filter_attr, filter_value, rtype=:object
+
+      # TODO: this is a bit of a mess
+
+      case filter_attr
+      when :id
+        url = @urlbuilder.anime_by_id(filter_value)
+      when :slug
+        url = @urlbuilder.anime_by_slug(filter_value)
+      else
+        raise ArgumentError.new("filter_attr argument (1st) not in {:id, :slug}")
+      end
+
+      result = self.get_result(url)
+
+      case rtype
+      when :json
+        return result
+      when :object
+        case filter_attr
+        when :id
+          return Anime.new(result['data'])
+        when :slug
+          # filtering by slug results in the 'data' attribute to be an array
+          return Anime.new(result['data'][0])
+        end
+      else
+        raise ArgumentError.new("rtype not :object or :json")
+      end
     end
-  
-  
-    def get_anime_by_id id
-      url = build_anime_url(id)
-      self.get_result(url)
+
+
+    def get_anime_by_id id, rtype=:object
+      self._get_anime_by_attr(:id, id, rtype)
     end
-  
-  
-    def batch_get_anime anime_ids, max_threads=200
-      results = self.batch_get_results(anime_ids, :get_anime_by_id, max_threads)
+
+
+    def get_anime_by_slug slug, rtype=:object
+      self._get_anime_by_attr(:slug, slug, rtype)
+    end
+
+
+    def _get_anime_by_id_json id
+      self._get_anime_by_attr(:id, id, :json)
+    end
+
+
+    def batch_get_anime anime_ids
+      results = self.batch_get_results(anime_ids, :_get_anime_by_id_json)
   
       anime_items = []
       results.each do |id, result|
@@ -169,8 +199,9 @@ module Foxit
       anime_items
     end
   
-    def get_anime_documents anime_ids, max_threads=200
-      anime_items = self.batch_get_anime(anime_ids, max_threads)
+
+    def get_anime_documents anime_ids
+      anime_items = self.batch_get_anime(anime_ids)
       self.objects_to_hash(anime_items)
     end
   

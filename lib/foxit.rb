@@ -1,5 +1,6 @@
 require "foxit/objects"
 require "foxit/helpers"
+require "foxit/url_builder"
 
 
 module Foxit
